@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8" />
@@ -1328,7 +1328,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serverTimestamp }
+  import { getFirestore, collection, doc, addDoc, setDoc, getDocs, query, orderBy, where, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, fetchSignInMethodsForEmail }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -1963,7 +1963,7 @@
                   ${r.vehicle?`<div class="detail-pill">🔧 ${r.vehicle}</div>`:''}
                   ${r.vehicleNumber?`<span class="plate-commercial" style="font-size:12px;">${fmtPlate(r.vehicleNumber)}</span>`:''}
                 </div>
-                <button onclick="shareRide('${r.from}','${r.to}','${r.date}','${r.time}','${r.price}','1','${r.vehicle||''}','${r.vehicleNumber||''}','${r.driverName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+                <button onclick="shareRide('${r.id}','hire','${r.from}','${r.to}','${r.date}','${r.time}','${r.price}','1','${r.vehicle||''}','${r.vehicleNumber||''}','${r.driverName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
               </div>
               <div class="ride-footer">
                 <div class="driver-info">
@@ -2012,7 +2012,7 @@
   'plate-commercial'
 }" style="font-size:12px;">${fmtPlate(r.vehicleNumber)}</span>`:''}
                 </div>
-                <button onclick="shareRide('${r.from}','${r.to}','${r.date}','${r.time}','${r.price}','${r.seats}','${r.vehicle||''}','${r.vehicleNumber||''}','${r.driverName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+                <button onclick="shareRide('${r.id}','ride','${r.from}','${r.to}','${r.date}','${r.time}','${r.price}','${r.seats}','${r.vehicle||''}','${r.vehicleNumber||''}','${r.driverName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
               </div>
               <div class="ride-footer">
                 <div class="driver-info">
@@ -2758,16 +2758,20 @@
     const d = pendingDriverData;
     sendWelcomeEmailIfNew(d.email, d.name, 'driver');
 
+    // Pre-generate ID so Telegram link can include it
+    const rideRef = doc(collection(db, 'rides'));
+    const rideId  = rideRef.id;
+
     // Telegram pehle — Firestore result ka wait nahi
     if(d.postType === 'hire') {
       sendTelegramMsg(buildHireMsg({
-        from:d.from, to:d.to, price:d.price,
+        id:rideId, from:d.from, to:d.to, price:d.price,
         vehicle:d.vehicle, vehicleType:d.vehicleType,
         driverName:d.name
       }));
     } else {
       sendTelegramMsg(buildRideMsg({
-        from:d.from, to:d.to, date:d.date, time:d.time,
+        id:rideId, from:d.from, to:d.to, date:d.date, time:d.time,
         price:d.price, seats:d.seats, vehicle:d.vehicle,
         vehicleNumber:d.vehicleNumber, vehicleType:d.vehicleType,
         driverName:d.name
@@ -2775,7 +2779,7 @@
     }
 
     try {
-      await addDoc(collection(db,'rides'),{
+      await setDoc(rideRef, {
         driverName:d.name, driverPhone:d.phone, driverEmail:d.email||'',
         from:d.from, to:d.to, date:d.date, time:d.time,
         seats:d.seats, price:d.price,
@@ -3330,10 +3334,15 @@
     const d = pendingRequestData;
     sendWelcomeEmailIfNew(d.passengerEmail, d.passengerName, 'passenger');
 
+    // Pre-generate ID so Telegram link can include it
+    const reqRef = doc(collection(db, 'ride_requests'));
+    const reqId  = reqRef.id;
+
     // Telegram pehle — Firestore result ka wait nahi
     if(d.postType === 'hire') {
       // Main public group — simple teaser
       sendTelegramMsg(buildHireRequestMsg({
+        id: reqId,
         vehicleType: d.vehicleType,
         location: d.from,
         date: d.date,
@@ -3343,6 +3352,7 @@
       }));
     } else {
       sendTelegramMsg(buildRequestMsg({
+        id: reqId,
         from:d.from, to:d.to, date:d.date,
         seats:d.seats, budgetMin:d.budgetMin, budgetMax:d.budgetMax,
         passengerName:d.passengerName
@@ -3350,7 +3360,7 @@
     }
 
     try {
-      await addDoc(collection(db,'ride_requests'), {
+      await setDoc(reqRef, {
         ...d, verified: true, createdAt: serverTimestamp()
       });
       closeRequestModalDirect();
@@ -3412,7 +3422,7 @@
                 <div class="detail-pill">📅 ${formatDate(r.date)}</div>
                 ${r.to ? `<div class="detail-pill">🔧 ${r.to}</div>` : ''}
               </div>
-              <button onclick="shareRequest('${r.from}','${r.to}','${r.date}','1','${r.budgetMin}','${r.budgetMax||r.budgetMin}','${r.passengerName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+              <button onclick="shareRequest('${r.id}','hirereq','${r.from}','${r.to}','${r.date}','1','${r.budgetMin}','${r.budgetMax||r.budgetMin}','${r.passengerName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
             </div>
             <div class="ride-footer">
               <div class="driver-info">
@@ -3451,7 +3461,7 @@
                 <div class="detail-pill">📅 ${formatDate(r.date)}</div>
                 <div class="detail-pill">👥 ${r.seats} seat</div>
               </div>
-              <button onclick="shareRequest('${r.from}','${r.to}','${r.date}','${r.seats}','${r.budgetMin}','${r.budgetMax||r.budgetMin}','${r.passengerName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+              <button onclick="shareRequest('${r.id}','ride','${r.from}','${r.to}','${r.date}','${r.seats}','${r.budgetMin}','${r.budgetMax||r.budgetMin}','${r.passengerName}')" style="background:var(--orange);border:none;color:white;cursor:pointer;padding:6px 8px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,101,42,0.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
             </div>
             <div class="ride-footer">
               <div class="driver-info">
@@ -3461,7 +3471,7 @@
                   <div class="driver-sub">🙋 Passenger</div>
                 </div>
               </div>
-              <button class="book-btn" onclick="handleContactPassenger('${r.passengerPhone}','${r.passengerName}')">${T[lang].contactPassBtn}</button>
+              <button class="book-btn" onclick="handleContactPassenger('${r.passengerPhone}','${r.passengerName}','${r.id}')">${T[lang].contactPassBtn}</button>
             </div>
           </div>
         </div>`).join('');
@@ -3595,13 +3605,14 @@
     }, 500);
   };
 
-  window.handleContactPassenger = function(phone, name) {
+  window.handleContactPassenger = function(phone, name, requestId) {
     if(window.driverVerified) {
       window.location.href = 'tel:' + phone;
     } else {
       // Save pending contact
-      window._pendingContactPhone = phone;
-      window._pendingContactName  = name;
+      window._pendingContactPhone   = phone;
+      window._pendingContactName    = name;
+      window._pendingContactReqId   = requestId || null;
       // Show driver verify modal
       document.getElementById('driverVerifyOverlay').classList.add('active');
       document.getElementById('driverVerifyOverlay').classList.add('active');
@@ -3643,7 +3654,8 @@
       vehicle: v('dvVehicle'),
       vehicleType: v('dvVtype'),
       vehicleNumber: v('dvVnum'),
-      marketingConsent: document.getElementById('dvMarketing').checked
+      marketingConsent: document.getElementById('dvMarketing').checked,
+      requestId: window._pendingContactReqId || null
     };
 
     const btn = document.getElementById('dvSubmitBtn');
@@ -3669,6 +3681,34 @@
   async function unlockRequests() {
     if(!pendingDriverVerifyData) return;
     const d = pendingDriverVerifyData;
+
+    // Telegram support group — fetch request detail pehle taaki full message ban sake
+    if(d.requestId) {
+      try {
+        const { doc: fsDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const snap = await getDoc(fsDoc(db, 'ride_requests', d.requestId));
+        if(snap.exists()) {
+          const req = snap.data();
+          sendTelegramMsg(
+            `🚗 <b>Ride Request Contact — Triplinko!</b>\n\n` +
+            `━━ 🙋 <b>Request Detail</b> ━━\n` +
+            `📍 <b>${req.from}</b> → <b>${req.to}</b>\n` +
+            `📅 ${req.date} | 💺 ${req.seats} seat\n` +
+            (req.budgetMin ? `💰 Budget: ₹${req.budgetMin}${req.budgetMax && req.budgetMax !== req.budgetMin ? ' – ₹' + req.budgetMax : ''}\n` : '') +
+            `👤 Passenger: <b>${req.passengerName}</b>\n` +
+            `📞 Passenger Phone: <b>${req.passengerPhone}</b>\n\n` +
+            `━━ 🚗 <b>Driver Detail</b> ━━\n` +
+            `👤 Driver: <b>${d.name}</b>\n` +
+            `📞 Driver Phone: <b>${d.phone}</b>\n` +
+            `🚗 Vehicle: ${d.vehicle || 'N/A'}\n` +
+            `🔑 Plate: ${d.vehicleNumber || 'N/A'}\n\n` +
+            `#TriplinkoRide #PahadiSawari #Uttarakhand`,
+            TG_SUPPORT_GROUP
+          );
+        }
+      } catch(e) { console.error('Telegram ride contact error:', e); }
+    }
+
     // Save driver contact in Firestore
     try {
       await addDoc(collection(db,'driver_contacts'), {
@@ -3684,8 +3724,9 @@
     if(window._pendingContactPhone) {
       setTimeout(() => {
         window.location.href = 'tel:' + window._pendingContactPhone;
-        window._pendingContactPhone = null;
-        window._pendingContactName  = null;
+        window._pendingContactPhone  = null;
+        window._pendingContactName   = null;
+        window._pendingContactReqId  = null;
       }, 500);
     } else {
       loadRequests();
@@ -4005,7 +4046,7 @@
 🚙 ${r.vehicle} | ${plate} ${r.vehicleNumber || ''}
 👤 Driver: ${r.driverName}
 
-📞 Book karo: <a href="https://triplinko.com">triplinko.com</a>
+📞 Book karo: <a href="https://triplinko.com?ride=${r.id}">triplinko.com?ride=${r.id}</a>
 #TriplinkoRide #PahadiSawari #Uttarakhand`;
   }
 
@@ -4017,7 +4058,7 @@
 💰 Budget: ₹${r.budgetMin}${r.budgetMax && r.budgetMax !== r.budgetMin ? ' – ₹' + r.budgetMax : ''}
 👤 Passenger: ${r.passengerName}
 
-📞 Contact karo: <a href="https://triplinko.com">triplinko.com</a>
+📞 Contact karo: <a href="https://triplinko.com?request=${r.id}">triplinko.com?request=${r.id}</a>
 #TriplinkoRequest #PahadiSawari #Uttarakhand`;
   }
 
@@ -4031,7 +4072,7 @@ ${vtype} ${r.vehicle ? '| ' + r.vehicle : ''}
 💰 ₹${r.price}/day
 👤 Owner: ${r.driverName}
 
-📞 Hire karo: <a href="https://triplinko.in">triplinko.in</a>
+📞 Hire karo: <a href="https://triplinko.com?hire=${r.id}">triplinko.com?hire=${r.id}</a>
 #TriplinkoHire #JCBHire #PahadiSawari #Uttarakhand`;
   }
 
@@ -4065,13 +4106,14 @@ ${vtype} chahiye
 📍 Location: <b>${r.location}</b>
 📅 Date: ${r.date || 'N/A'}${r.work ? '\n🔧 Kaam: ' + r.work : ''}${r.budgetMin ? '\n💰 Budget: ₹' + r.budgetMin + (r.budgetMax && r.budgetMax !== r.budgetMin ? ' – ₹' + r.budgetMax : '') + '/day' : ''}
 
-👉 Detail dekho: <a href="https://www.triplinko.com">www.triplinko.com</a>
+👉 Detail dekho: <a href="https://triplinko.com?hirereq=${r.id}">triplinko.com?hirereq=${r.id}</a>
 #TriplinkoHire #PahadiSawari #Uttarakhand`;
   }
 
   // Share function — WhatsApp/general
-  window.shareRide = function(from, to, date, time, price, seats, vehicle, vnum, driverName) {
-    const text = `🚗 Ride Available — Triplinko!\n\n📍 ${from} → ${to}\n📅 ${date} | 🕐 ${time}\n💺 ${seats} seat | 💰 ₹${price}/seat\n🚙 ${vehicle} | ${vnum}\n👤 ${driverName}\n\n📞 Book: triplinko.com`;
+  window.shareRide = function(id, type, from, to, date, time, price, seats, vehicle, vnum, driverName) {
+    const url = type === 'hire' ? 'triplinko.com?hire=' + id : 'triplinko.com?ride=' + id;
+    const text = `🚗 Ride Available — Triplinko!\n\n📍 ${from} → ${to}\n📅 ${date} | 🕐 ${time}\n💺 ${seats} seat | 💰 ₹${price}/seat\n🚙 ${vehicle} | ${vnum}\n👤 ${driverName}\n\n📞 Book: ${url}`;
     if(navigator.share) {
       navigator.share({ title: 'Triplinko Ride', text });
     } else {
@@ -4079,8 +4121,9 @@ ${vtype} chahiye
     }
   };
 
-  window.shareRequest = function(from, to, date, seats, budgetMin, budgetMax, name) {
-    const text = `🙋 Ride Request — Triplinko!\n\n📍 ${from} → ${to}\n📅 ${date} | 💺 ${seats} seat\n💰 Budget: ₹${budgetMin}${budgetMax && budgetMax !== budgetMin ? ' – ₹' + budgetMax : ''}\n👤 ${name}\n\n📞 Contact: triplinko.com`;
+  window.shareRequest = function(id, type, from, to, date, seats, budgetMin, budgetMax, name) {
+    const url = type === 'hirereq' ? 'triplinko.com?hirereq=' + id : 'triplinko.com?request=' + id;
+    const text = `🙋 Ride Request — Triplinko!\n\n📍 ${from} → ${to}\n📅 ${date} | 💺 ${seats} seat\n💰 Budget: ₹${budgetMin}${budgetMax && budgetMax !== budgetMin ? ' – ₹' + budgetMax : ''}\n👤 ${name}\n\n📞 Contact: ${url}`;
     if(navigator.share) {
       navigator.share({ title: 'Triplinko Request', text });
     } else {
@@ -4148,6 +4191,62 @@ ${vtype} chahiye
     } catch(e) {
       console.error('Email verify error:', e);
       showToast('❌ Kuch error hua. Dobara try karo.', 'error');
+    }
+  })();
+
+  // ─── DEEP LINK HANDLER ───────────────────────────────────────
+  (async function checkDeepLink() {
+    const params    = new URLSearchParams(window.location.search);
+    const rideId    = params.get('ride');
+    const hireId    = params.get('hire');
+    const reqId     = params.get('request');
+    const hirereqId = params.get('hirereq');
+    if(!rideId && !hireId && !reqId && !hirereqId) return;
+
+    const { doc: fsDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+    if(rideId) {
+      try {
+        const snap = await getDoc(fsDoc(db, 'rides', rideId));
+        if(snap.exists()) {
+          const r = snap.data();
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => openBooking(rideId, r.from, r.to, r.date, r.time, r.price, r.driverPhone, r.driverName, r.vehicleType || 'commercial'), 500);
+        }
+      } catch(e) { console.error('Deep link ride error:', e); }
+    }
+
+    if(hireId) {
+      try {
+        const snap = await getDoc(fsDoc(db, 'rides', hireId));
+        if(snap.exists()) {
+          const r = snap.data();
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => openHireInquiry(hireId, r.driverPhone, r.driverName, r.vehicleType, r.from, r.to || '', r.price || '', r.vehicleNumber || ''), 500);
+        }
+      } catch(e) { console.error('Deep link hire error:', e); }
+    }
+
+    if(reqId) {
+      try {
+        const snap = await getDoc(fsDoc(db, 'ride_requests', reqId));
+        if(snap.exists()) {
+          const r = snap.data();
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => handleContactPassenger(r.passengerPhone, r.passengerName, reqId), 500);
+        }
+      } catch(e) { console.error('Deep link request error:', e); }
+    }
+
+    if(hirereqId) {
+      try {
+        const snap = await getDoc(fsDoc(db, 'ride_requests', hirereqId));
+        if(snap.exists()) {
+          const r = snap.data();
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => openHireResponse(hirereqId, r.passengerPhone, r.passengerName, r.vehicleType, r.from || '', r.date || '', r.to || '', r.budgetMin || '', r.budgetMax || ''), 500);
+        }
+      } catch(e) { console.error('Deep link hirereq error:', e); }
     }
   })();
 
