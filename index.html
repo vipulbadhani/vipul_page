@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8" />
@@ -2698,10 +2698,6 @@
           if(window._hireAfterOTP) window._hireAfterOTP(verifiedPhone);
         } else if(otpTarget === 'driver_verify') {
           await unlockRequests();
-        } else if(otpTarget === 'request') {
-          await saveRequest();
-        } else if(otpTarget === 'hire_response') {
-          await saveHireResponse();
         }
       }, 1500);
     } catch(e) {
@@ -4115,7 +4111,6 @@
 👤 Driver: ${r.driverName}
 
 📞 Book karo: <a href="https://triplinko.com?ride=${r.id}">triplinko.com?ride=${r.id}</a>
-
 #TriplinkoRide #PahadiSawari #Uttarakhand`;
   }
 
@@ -4128,7 +4123,6 @@
 👤 Passenger: ${r.passengerName}
 
 📞 Contact karo: <a href="https://triplinko.com?request=${r.id}">triplinko.com?request=${r.id}</a>
-
 #TriplinkoRequest #PahadiSawari #Uttarakhand`;
   }
 
@@ -4143,7 +4137,6 @@ ${vtype} ${r.vehicle ? '| ' + r.vehicle : ''}
 👤 Owner: ${r.driverName}
 
 📞 Hire karo: <a href="https://triplinko.com?hire=${r.id}">triplinko.com?hire=${r.id}</a>
-
 #TriplinkoHire #JCBHire #PahadiSawari #Uttarakhand`;
   }
 
@@ -4178,7 +4171,6 @@ ${vtype} chahiye
 📅 Date: ${r.date || 'N/A'}${r.work ? '\n🔧 Kaam: ' + r.work : ''}${r.budgetMin ? '\n💰 Budget: ₹' + r.budgetMin + (r.budgetMax && r.budgetMax !== r.budgetMin ? ' – ₹' + r.budgetMax : '') + '/day' : ''}
 
 👉 Detail dekho: <a href="https://triplinko.com?hirereq=${r.id}">triplinko.com?hirereq=${r.id}</a>
-
 #TriplinkoHire #PahadiSawari #Uttarakhand`;
   }
 
